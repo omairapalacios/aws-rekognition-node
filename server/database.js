@@ -1,6 +1,6 @@
 require('dotenv').config();
 import { Pool } from 'pg';
-/* import { addImageToCollection } from './faceRekognition'; */
+import { addImageToCollection } from './faceRekognition';
 
 const db = new Pool({
   user: process.env.DB_USER,
@@ -30,19 +30,20 @@ const savePicture = async (req, res) => {
       originalFile.etag,
     ];
 
-    console.log('DATAASE', db);
+    console.log('DATABASE', db);
     const result = await db.query(
-      'INSERT INTO pictures (filename, mimeType, bucket, contentType, location, etag) VALUES ($1, $2, $3, $4, $5, $6)',
+      'INSERT INTO pictures (filename, mimeType, bucket, contentType, location, etag) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
       values
     );
     console.log('INSERT MESSAGE', result);
+    console.log('ID INSERTED', result.rows[0].id);
     //Add to AWS Rekognition
-/*     await addImageToCollection(
+    await addImageToCollection(
       originalFile.bucket,
-      result._id.toString(),
+      result.rows[0].id,
       originalFile.key
     );
- */
+
     return res.status(200).json({ success: true, data: 'Upload complete' });
   } catch (e) {
     return res.status(500).json({
@@ -51,5 +52,14 @@ const savePicture = async (req, res) => {
     });
   }
 };
+const getPictures = async ids => {
+  console.log('IDDDDDDDDS', ids)
+  const result = await db.query(
+    'SELECT * FROM table WHERE id = ANY($1::int[])',
+    [ids]
+  );
+  console.log('IMAGES FOUNDED', result.rows)
+  return result.rows;
+}
 
-export { db, savePicture };
+export { db, savePicture, getPictures };

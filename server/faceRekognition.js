@@ -33,6 +33,7 @@ async function createCollection(collectionName) {
   });
 }
 async function addImageToCollection(bucket, pictureId, s3Filename) {
+  console.log('DATA TO SAVE COLLECT', bucket,pictureId, s3Filename)
   return new Promise((resolve, reject) => {
     rekognition.indexFaces(
       {
@@ -55,6 +56,42 @@ async function addImageToCollection(bucket, pictureId, s3Filename) {
   });
 }
 
+async function recogniseFromBuffer(image) {
+  console.log('IMAGE BUFFER', image)
+    return new Promise((resolve, reject) => {
+      rekognition.searchFacesByImage(
+        {
+          CollectionId: collectionName,
+          FaceMatchThreshold: 95,
+          Image: { Bytes: image },
+          MaxFaces: 5
+        },
+        async (err, data) => {
+          console.log('DATA REKOGNITION', data)
+          if (err) {
+            return reject(err)
+          }
+  
+          if (data.FaceMatches && data.FaceMatches.length > 0 && data.FaceMatches[0].Face) {
+            const sorted = data.FaceMatches.sort(
+              (a, b) => b.Face.Confidence - a.Face.Confidence
+            )
+  
+            const matchSet = new Set()
+            sorted.forEach(match => {
+              matchSet.add(Types.ObjectId(match.Face.ExternalImageId.toString()))
+            })
+  
+            const pictures = getPictures(Array.from(matchSet).map(c => Types.ObjectId(c)))
+  
+            return resolve(pictures)
+          }
+          return reject('Not recognized')
+        }
+      )
+    })
+}
+
 async function initialise() {
   AWS.config.region = process.env.AWS_REGION;
 
@@ -70,6 +107,6 @@ async function initialise() {
   if (!hasCollection) {
     await createCollection(collectionName);
   }
-}
 
-export { initialise, addImageToCollection };
+}
+export { initialise, addImageToCollection, recogniseFromBuffer };
