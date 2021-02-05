@@ -1,5 +1,6 @@
 require('dotenv').config();
 import { Pool } from 'pg';
+/* import { addImageToCollection } from './faceRekognition'; */
 
 const db = new Pool({
   user: process.env.DB_USER,
@@ -11,7 +12,7 @@ const db = new Pool({
 
 const savePicture = async (req, res) => {
   try {
-    console.log('REQ IMAGE', req)
+    console.log('REQ IMAGE', req);
     const originalFile = req.file;
 
     if (!originalFile) {
@@ -29,15 +30,19 @@ const savePicture = async (req, res) => {
       originalFile.etag,
     ];
 
+    console.log('DATAASE', db);
     const result = await db.query(
       'INSERT INTO pictures (filename, mimeType, bucket, contentType, location, etag) VALUES ($1, $2, $3, $4, $5, $6)',
       values
     );
-    console.log('INSERT MESSAGE', result)
-    /*     const result = await new PictureModel(picture).save()
-     */
-    // TODO... Add to AWS Rekognition
-
+    console.log('INSERT MESSAGE', result);
+    //Add to AWS Rekognition
+/*     await addImageToCollection(
+      originalFile.bucket,
+      result._id.toString(),
+      originalFile.key
+    );
+ */
     return res.status(200).json({ success: true, data: 'Upload complete' });
   } catch (e) {
     return res.status(500).json({

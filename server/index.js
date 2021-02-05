@@ -1,8 +1,8 @@
 require('dotenv').config();
 import express from 'express';
 import next from 'next';
-import { connectToDatabase } from './database';
 import router from './router'
+import { initialise } from './faceRekognition'
 
 const dev = process.env.NODE_ENV !== 'production';
 const nextApp = next({ dev });
@@ -16,9 +16,7 @@ nextApp.prepare().then(async () => {
   app.get('*', (req, res) => {
     return handle(req, res);
   });
-/* 
-  await connectToDatabase(); */
-
+  await initialise();
   app.listen(port, (err) => {
     if (err) throw err;
     console.log(`> Ready on localhost:${port}`);

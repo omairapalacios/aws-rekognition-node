@@ -14,6 +14,7 @@ const s3 = new aws.S3({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   region: process.env.AWS_REGION,
 });
+console.log('AMAZON S3', s3);
 
 const setMetadata = (file) => ({ filename: file.originalname });
 const setKey = (file) =>
